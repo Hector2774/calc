@@ -1,0 +1,37 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generar la parte de Android del proyecto
+        run: flutter create --platforms=android --org com.personal --project-name calculadora .
+
+      - name: Poner el nombre visible de la app
+        run: sed -i 's/android:label="calculadora"/android:label="Calculadora"/' android/app/src/main/AndroidManifest.xml
+
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calculadora-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
